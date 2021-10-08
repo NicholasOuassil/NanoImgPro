@@ -6,3 +6,7 @@ NanoImgPro.py contains the main class to process files
 
 
 batch_process.py contains an example batch processing file
+
+
+
+currently version 0.0
