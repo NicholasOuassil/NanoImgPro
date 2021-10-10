@@ -188,8 +188,11 @@ class NanoImgPro():
     ma_bl[:window] = np.flip(self.__moving_average(np.flip(trace), window))[:window] #backward pass
     #fill in center with a line to avoid stimulation
     # if this is a tad short add one more value to the end
-    linear_fill_in = np.arange(ma_bl[early_frame-1], ma_bl[late_frame-1],
+    # deal with exception that cant calculate flat traces
+    try : linear_fill_in = np.arange(ma_bl[early_frame-1], ma_bl[late_frame-1],
                           (ma_bl[late_frame-1] - ma_bl[early_frame-1])/(late_frame-early_frame))
+    except ValueError:
+      linear_fill_in = np.ones(int(late_frame-early_frame)) * np.mean([ma_bl[early_frame-1], ma_bl[late_frame-1]])
     
     if len(linear_fill_in) == len(ma_bl[early_frame:late_frame]):
       ma_bl[early_frame:late_frame] = linear_fill_in
