@@ -30,7 +30,7 @@ class NanoImgPro():
     self.metrics_df = pd.DataFrame()
     self.fit_df = pd.DataFrame()
     self.save_path = ''
-    self.version = '_v0-0'
+    self.version = '_v0-2'
 
     # private variables 
     self._xsplits = np.array([]) # where to break on x axis
@@ -188,12 +188,13 @@ class NanoImgPro():
     ma_bl[:window] = np.flip(self.__moving_average(np.flip(trace), window))[:window] #backward pass
     #fill in center with a line to avoid stimulation
     # if this is a tad short add one more value to the end
+
     # deal with exception that cant calculate flat traces
     try : linear_fill_in = np.arange(ma_bl[early_frame-1], ma_bl[late_frame-1],
                           (ma_bl[late_frame-1] - ma_bl[early_frame-1])/(late_frame-early_frame))
     except ValueError:
       linear_fill_in = np.ones(int(late_frame-early_frame)) * np.mean([ma_bl[early_frame-1], ma_bl[late_frame-1]])
-    
+
     if len(linear_fill_in) == len(ma_bl[early_frame:late_frame]):
       ma_bl[early_frame:late_frame] = linear_fill_in
 
@@ -228,7 +229,9 @@ class NanoImgPro():
     Input:
     pooled trace must be a 1d array  
      """
-    baselined_trace = trace.copy() - self.__baseline_als(trace)
+    baseline_flouresence_divisor = trace[self.stim_frame-30:self.stim_frame-5].mean()
+    trace_magnitude_adjusted = trace.copy() / baseline_flouresence_divisor
+    baselined_trace = trace_magnitude_adjusted - self.__baseline_als(trace_magnitude_adjusted)
     dFoF_trace = baselined_trace - self.__baseline_ma(baselined_trace,
                                                 early_frame = self.stim_frame-10,
                                                 late_frame = self.ma_tail_start)
@@ -271,7 +274,7 @@ class NanoImgPro():
     window_start = starting_frame - 5 
     y_window = baselined_trace[window_start:]
     x_window = np.arange(0, 600)[window_start:]/8.33 - window_start / 8.33
-    fitting_bounds = ([-1,0,0.01,-1], [5,100,100,1])
+    fitting_bounds = ([-1,0.001,0.001,-1], [5,200,100,1])
 
     try:  optimal_values, _ = curve_fit(self.__fitting_function, x_window, y_window, bounds=fitting_bounds)
     except RuntimeError: optimal_values = (5, 100, 100, 1)
@@ -286,7 +289,7 @@ class NanoImgPro():
     """
     Used for fitting in roi_function_fit
     """
-    return scale_factor*(1-np.exp(-x)/tau_on)*np.exp(-x/tau_off) + shift 
+    return scale_factor*(1-np.exp(-x/tau_on))*np.exp(-x/tau_off) + shift 
     
 
 
@@ -299,29 +302,42 @@ class NanoImgPro():
     sig_threshold = ((3 * baselined_roi_trace[:self.stim_frame-5].std())
      + baselined_roi_trace[self.stim_frame-12:self.stim_frame-2].mean())
     
-    if baselined_roi_trace[self.stim_frame:self.stim_frame+50].max() >= sig_threshold:
-      # if we saw a max value above significance in the next 50 frames
-      fit_trace, scale, tau_on, tau_off, shift = self.__roi_function_fit(
-          baselined_roi_trace, starting_frame=self.stim_frame)
+    trace_argmax = np.argmax(baselined_roi_trace[self.stim_frame:self.stim_frame+50])
+    max_dfof =  baselined_roi_trace[self.stim_frame+trace_argmax:self.stim_frame+trace_argmax+5].mean()
+
+    neg_sig_threshold= (baselined_roi_trace[self.stim_frame-12:self.stim_frame-2].mean() -
+                      (3 * baselined_roi_trace[:self.stim_frame-5].std()))
+    min_dfof =  baselined_roi_trace[self.stim_frame:self.stim_frame+200].min()
+
+    # if min_dfof < 0:
+    #   print(min_dfof, trace_argmin)
+
+    if max_dfof >= sig_threshold:
+      if min_dfof >= neg_sig_threshold:
+        # if we saw a max value above significance in the next 50 frames
+        fit_trace, scale, tau_on, tau_off, shift = self.__roi_function_fit(
+            baselined_roi_trace, starting_frame=self.stim_frame)
+        
+        sig_shadow = (baselined_roi_trace[self.stim_frame-12:self.stim_frame-2].mean() -
+                      (3 * baselined_roi_trace[:self.stim_frame-5].std()))
       
-      sig_shadow = (baselined_roi_trace[self.stim_frame-12:self.stim_frame-2].mean() -
-                    (3 * baselined_roi_trace[:self.stim_frame-5].std()))
-     
-      self.sig_roi_traces['roi_'+str(roi_num)] = baselined_roi_trace
-      self.sig_roi_fit_trace['roi_'+str(roi_num)] = fit_trace
-      self.sig_roi_metrics['roi_'+str(roi_num)] = {
-          'x_begin': int(self._xsplits[x_iter]),
-          'x_end': int(self._xsplits[x_iter+1]),
-          'y_begin': int(self._ysplits[y_iter]),
-          'y_end': int(self._ysplits[y_iter+1]),
-          'x_center': int(np.mean((self._xsplits[x_iter+1],
-                                   self._xsplits[x_iter]))),
-          'y_center': int(np.mean((self._ysplits[y_iter+1],
-                                   self._ysplits[y_iter]))),
-          'max_dFoF':baselined_roi_trace[self.stim_frame:self.stim_frame+50].max(),
-          'tau_on': tau_on, 
-          'tau_off': tau_off, 
-          'shadow_suspected':baselined_roi_trace[self.stim_frame:self.stim_frame+10].min() < sig_shadow }
+        self.sig_roi_traces['roi_'+str(roi_num)] = baselined_roi_trace
+        self.sig_roi_fit_trace['roi_'+str(roi_num)] = fit_trace
+        self.sig_roi_metrics['roi_'+str(roi_num)] = {
+            'x_begin': int(self._xsplits[x_iter]),
+            'x_end': int(self._xsplits[x_iter+1]),
+            'y_begin': int(self._ysplits[y_iter]),
+            'y_end': int(self._ysplits[y_iter+1]),
+            'x_center': int(np.mean((self._xsplits[x_iter+1],
+                                    self._xsplits[x_iter]))),
+            'y_center': int(np.mean((self._ysplits[y_iter+1],
+                                    self._ysplits[y_iter]))),
+            'max_dFoF':max_dfof,
+            'min_dFoF':min_dfof,
+            'tau_on': tau_on, 
+            'tau_off': tau_off, 
+            'shadow_suspected':baselined_roi_trace[self.stim_frame:self.stim_frame+10].min() < sig_shadow}
+ 
 
   def __draw_roi_grid(self):
     pass
