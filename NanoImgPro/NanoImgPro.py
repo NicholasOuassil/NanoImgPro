@@ -4,9 +4,6 @@ from scipy.optimize import curve_fit
 from scipy.sparse.linalg import spsolve
 from scipy import sparse
 from tqdm import tqdm
-import sys
-import os
-import copy
 import matplotlib.pyplot as plt
 from tifffile import tifffile
 import seaborn as sns
