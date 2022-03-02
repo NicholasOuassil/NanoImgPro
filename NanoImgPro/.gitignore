@@ -3,8 +3,10 @@
 
 # ignore random other files 
 
-*.pyc
+__pycache__
 
 NanoImgPro.egg-info
+
+docs
 
 
