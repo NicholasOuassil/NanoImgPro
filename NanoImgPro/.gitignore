@@ -1,0 +1,10 @@
+# ignore mac files
+.DS_Store
+
+# ignore random other files 
+
+*.pyc
+
+NanoImgPro.egg-info
+
+

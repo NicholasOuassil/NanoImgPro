@@ -15,34 +15,54 @@ class NanoImgPro():
     """
     Initiate the image processing tool
 
-    ## Parameters
-    tiff_stack_path : str
-          Path to file as a string
-    roi_size : int
-          ROI box size (e.g. a value of 15 will result in roi boxes that are 15 x 15 pixels)
-    stim_side : str='left', options are "right" or "left", optional
-          Places incomplete boxes farthest away from stimulator location
-    stim_frame : int = 200, optional
-          ID 
-    ma_tail_start:int = 485
+    ## Attributes
+
+    **tiff_stack_path** : str  
+    > Path to file as a string
+
+    **roi_size** : int  
+    > ROI box size (e.g. a value of 15 will result in roi boxes that are 15 x 15 pixels)
+
+    **stim_side** : str='left', options are "right" or "left", optional   
+    > Places incomplete boxes farthest away from stimulator location
+
+    **stim_frame** : int = 200, optional  
+    > Frame at which the slice is stimulated
+
+    **ma_tail_start** : int = 485
+    > Beginning of tail for Moving Average Baseline Correction
 
 
 
     """
-    self.tiff_stack_path:str = tiff_stack_path
+    self.tiff_stack_path:str = tiff_stack_path 
+    """ Path to Tiff Stack """
     self.stack:np.ndarray = tifffile.imread(tiff_stack_path) / 255 # image file
-    self.roi_size:int = roi_size # size of the roi in pixels
-    self.stim_side:str = stim_side # location of the stimulator
+    """ Loaded and Normalized Tiff Stack"""
+    self.roi_size:int = roi_size #
+    """ Size of the roi in pixels """
+    self.stim_side:str = stim_side #
+    """Location of the stimulator: see 'stim_side' in initialization attributes """
     self.stim_frame:int = stim_frame
+    """ Stimulation Frame: See 'stim_frame' in initialization attributes """
     self.ma_tail_start:int = ma_tail_start
-    self.sig_roi_traces:Dict[str:np.ndarray] = {}
-    self.sig_roi_metrics:Dict[str:np.ndarray] = {}
-    self.sig_roi_fit_trace:Dict[str:np.ndarray] = {}
+    """ Moving average tail start: see ~ma_tail_start~ in initialization attributes """
+    self.sig_roi_traces:Dict[str, np.ndarray] = {}
+    """ Dictonary of Significant ROI traces  """
+    self.sig_roi_metrics:Dict[str, np.ndarray] = {}
+    """ Dictonary of Significant ROI Metrics  """
+    self.sig_roi_fit_trace:Dict[str, np.ndarray] = {}
+    """ Dictonary of Significant ROI Fits  """
     self.traces_df:pd.DataFrame = pd.DataFrame()
-    self.metrics_df = pd.DataFrame()
-    self.fit_df = pd.DataFrame()
+    """ DataFrame of Significant ROI traces  """
+    self.metrics_df:pd.DataFrame = pd.DataFrame()
+    """ DataFrame of Significant ROI metrics  """
+    self.fit_df:pd.DataFrame = pd.DataFrame()
+    """ DataFrame of Significant ROI fits  """
     self.save_path:str = ''
+    """ Path to save files, if no specified path, saves in working directory."""
     self.version:str = '_v0-2'
+    """ Version Number - Appended to Saved Files"""
 
     # private variables 
     self._xsplits:np.ndarray = np.array([]) # where to break on x axis
@@ -62,15 +82,15 @@ class NanoImgPro():
     """
     Process the file
      
-    ## Parameters
+    ## Attributes
 
-    loading_bar : bool, optional
-         Turns tqdm loading bar on/off
+    **loading_bar** : bool, optional  
+    > Turns tqdm loading bar on/off
 
     ##  Returns 
 
-    None
-         Updates are applied to class variables
+    None  
+    > Updates are applied to class variables
 
 
     """
@@ -109,16 +129,16 @@ class NanoImgPro():
     """
     Create Heatmaps for dFoF and Tau Off and save them if desired
      
-    ## Parameters
+    ## Attributes
 
-    save : bool, optional, default = False
-         Save the generated heatmap as a png
+    **save** : bool = False, optional  
+    > Save the generated heatmap as a png
     
-    display : bool, optional, default = False
-         Should the figure be displayed
+    **display** : bool = False, optional  
+    > Should the figure be displayed
 
-    dpi : int, optional, default = 250
-         Resolution of generated figure
+    **dpi** : int = 250, optional 
+    > Resolution of generated figure
 
     ##  Returns 
 
@@ -168,6 +188,23 @@ class NanoImgPro():
   def plot_average_trace(self, save:bool=False, display:bool=False, dpi:int=250):
     """
     Call this fuction to plot the average dF over F0 trace 
+
+    ## Attributes
+
+    **save** : bool = False, optional  
+    > Save the generated heatmap as a png
+    
+    **display** : bool = False, optional  
+    > Should the figure be displayed
+
+    **dpi** : int = 250, optional 
+    > Resolution of generated figure
+
+    ##  Returns 
+
+    None
+    
+
     """
   
     plt.close()
@@ -185,9 +222,10 @@ class NanoImgPro():
     if display:
       plt.show()
 
-  def save_data(self, path=None) -> None:
+  def save_data(self) -> None:
     """
-    Save the pandas class variables that store the processed data
+    Save the pandas class variables that store the processed data at location of "save_path"
+    
     """
     self.traces_df.to_excel(self.save_path+'_traces.xlsx')
     self.metrics_df.to_excel(self.save_path+'_metrics.xlsx')
@@ -195,7 +233,7 @@ class NanoImgPro():
 
 
     
-  # staticmethod
+  
   def __baseline_als(self, y_als:np.ndarray, lam:int=1E7, p:float=0.25, niter:int=20) -> np.ndarray:
     """
     Asymmetric Least Squares Smoothing by P. Eilers and H. Boelens in 2005. 
@@ -214,7 +252,7 @@ class NanoImgPro():
         w = p * (y_als > z) + (1-p) * (y_als < z)
     return z # return array to subtract from trace  
 
-  # staticmethod
+  
   def __baseline_ma(self, trace:np.ndarray, window:int=40, early_frame:int=190, late_frame:int=485):
     """
     Calculate a moving average baseline of the trace
@@ -249,7 +287,7 @@ class NanoImgPro():
     return ma_bl # return the MA baseline 
 
 
-  # staticmethod
+  
   def __moving_average(self, a:np.ndarray, window:int) -> np.ndarray:
     """ 
     Calculate a moving average 

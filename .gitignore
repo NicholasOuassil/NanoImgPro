@@ -1,0 +1,5 @@
+#ignore package files
+dist 
+
+#ignore mac files
+.DS_Store
