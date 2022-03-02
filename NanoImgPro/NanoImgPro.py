@@ -7,45 +7,72 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 from tifffile import tifffile
 import seaborn as sns
+from typing import Dict, List
 
 class NanoImgPro():
-  def __init__(self, tiff_stack_path:str, roi_size:int, stim_side='left',
-               stim_frame = 200, ma_tail_start = 485):
+  def __init__(self, tiff_stack_path:str, roi_size:int, stim_side:str='left',
+               stim_frame:int = 200, ma_tail_start:int = 485):
     """
     Initiate the image processing tool
+
+    ## Parameters
+    tiff_stack_path : str
+          Path to file as a string
+    roi_size : int
+          ROI box size (e.g. a value of 15 will result in roi boxes that are 15 x 15 pixels)
+    stim_side : str='left', options are "right" or "left", optional
+          Places incomplete boxes farthest away from stimulator location
+    stim_frame : int = 200, optional
+          ID 
+    ma_tail_start:int = 485
+
+
+
     """
-    self.tiff_stack_path = tiff_stack_path
-    self.stack = tifffile.imread(tiff_stack_path) / 255 # image file
-    self.roi_size = roi_size # size of the roi in pixels
-    self.stim_side = stim_side # location of the stimulator
-    self.stim_frame = stim_frame
-    self.ma_tail_start = ma_tail_start
-    self.sig_roi_traces = {}
-    self.sig_roi_metrics = {}
-    self.sig_roi_fit_trace = {}
-    self.traces_df = pd.DataFrame()
+    self.tiff_stack_path:str = tiff_stack_path
+    self.stack:np.ndarray = tifffile.imread(tiff_stack_path) / 255 # image file
+    self.roi_size:int = roi_size # size of the roi in pixels
+    self.stim_side:str = stim_side # location of the stimulator
+    self.stim_frame:int = stim_frame
+    self.ma_tail_start:int = ma_tail_start
+    self.sig_roi_traces:Dict[str:np.ndarray] = {}
+    self.sig_roi_metrics:Dict[str:np.ndarray] = {}
+    self.sig_roi_fit_trace:Dict[str:np.ndarray] = {}
+    self.traces_df:pd.DataFrame = pd.DataFrame()
     self.metrics_df = pd.DataFrame()
     self.fit_df = pd.DataFrame()
-    self.save_path = ''
-    self.version = '_v0-2'
+    self.save_path:str = ''
+    self.version:str = '_v0-2'
 
     # private variables 
-    self._xsplits = np.array([]) # where to break on x axis
-    self._ysplits = np.array([]) # where to break on y axis
+    self._xsplits:np.ndarray = np.array([]) # where to break on x axis
+    self._ysplits:np.ndarray = np.array([]) # where to break on y axis
     
     # get ready to save
     name_suffix = '_'+str(self.roi_size) + '_pxls' + self.version
 
     if "MMStack_Pos0" in self.tiff_stack_path:
-      self.save_path = self.tiff_stack_path.replace('MMStack_Pos0.ome.tif', name_suffix)
+      self.save_path:str = self.tiff_stack_path.replace('MMStack_Pos0.ome.tif', name_suffix)
 
     else:
-      self.save_path = self.tiff_stack_path.replace('.ome.tif', name_suffix)
+      self.save_path:str = self.tiff_stack_path.replace('.ome.tif', name_suffix)
 
 
-  def process_file(self, loading_bar=True):
+  def process_file(self, loading_bar:bool=True) -> None:
     """
-    Process the file and return results
+    Process the file
+     
+    ## Parameters
+
+    loading_bar : bool, optional
+         Turns tqdm loading bar on/off
+
+    ##  Returns 
+
+    None
+         Updates are applied to class variables
+
+
     """
     self.__pixel_splits()
     roi_num_counter = 0
@@ -78,10 +105,25 @@ class NanoImgPro():
     self.fit_df = pd.DataFrame.from_dict(self.sig_roi_fit_trace, orient='index')
     
 
-  def plot_metric_heatmaps(self, save=False, display=False, dpi=250):
+  def plot_metric_heatmaps(self, save:bool=False, display:bool=False, dpi:int=250) -> None:
     """
     Create Heatmaps for dFoF and Tau Off and save them if desired
+     
+    ## Parameters
 
+    save : bool, optional, default = False
+         Save the generated heatmap as a png
+    
+    display : bool, optional, default = False
+         Should the figure be displayed
+
+    dpi : int, optional, default = 250
+         Resolution of generated figure
+
+    ##  Returns 
+
+    None
+    
     """
     plt.close()
     plt.clf()
@@ -123,7 +165,7 @@ class NanoImgPro():
     if display:
       plt.show()
 
-  def plot_average_trace(self, save=False, display=False, dpi=250):
+  def plot_average_trace(self, save:bool=False, display:bool=False, dpi:int=250):
     """
     Call this fuction to plot the average dF over F0 trace 
     """
@@ -143,7 +185,7 @@ class NanoImgPro():
     if display:
       plt.show()
 
-  def save_data(self, path=None):
+  def save_data(self, path=None) -> None:
     """
     Save the pandas class variables that store the processed data
     """
@@ -154,7 +196,7 @@ class NanoImgPro():
 
     
   # staticmethod
-  def __baseline_als(self, y_als, lam=1E7, p=0.25, niter=20):
+  def __baseline_als(self, y_als:np.ndarray, lam:int=1E7, p:float=0.25, niter:int=20) -> np.ndarray:
     """
     Asymmetric Least Squares Smoothing by P. Eilers and H. Boelens in 2005. 
     Adapted from Stack Overflow Answer https://stackoverflow.com/a/57431514
@@ -173,7 +215,7 @@ class NanoImgPro():
     return z # return array to subtract from trace  
 
   # staticmethod
-  def __baseline_ma(self, trace, window=40, early_frame=190, late_frame=485):
+  def __baseline_ma(self, trace:np.ndarray, window:int=40, early_frame:int=190, late_frame:int=485):
     """
     Calculate a moving average baseline of the trace
     This method exempts the center of the trace
