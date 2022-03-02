@@ -10,4 +10,4 @@ example_batch_process.py contains an example batch processing file
 
 Documentation can be found in the [docs](https://github.com/NicholasOuassil/NanoImgPro/tree/main/docs) folder. Download the repo and open the HTML file in a web browser (works with chrome)
 
-currently version 0.2.1
+currently version 0.2.3

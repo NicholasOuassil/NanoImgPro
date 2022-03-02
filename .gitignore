@@ -1,5 +1,8 @@
 #ignore package files
 dist 
+NanoImgPro.egg-info
 
 #ignore mac files
 .DS_Store
+
+
