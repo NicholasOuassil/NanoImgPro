@@ -2,7 +2,7 @@ import sys
 import os
 from pathlib import Path
 from tqdm import tqdm
-from NanoImgPro import NanoImgPro
+from NanoImgPro.NanoImgPro import NanoImgPro
 
 
 folder_path = '/Documents/new_image_processing_data'  # Fill in path of data

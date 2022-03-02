@@ -5,8 +5,8 @@ Nanosensor Image Processor (NanoImgPro), a python-based image analysis tool for 
 NanoImgPro.py contains the main class to process files
 
 
-batch_process.py contains an example batch processing file
+example_batch_process.py contains an example batch processing file
 
 
 
-currently version 0.0
+currently version 0.2
