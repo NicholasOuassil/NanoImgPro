@@ -7,7 +7,7 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 from tifffile import tifffile
 import seaborn as sns
-from typing import Dict, List
+from typing import Dict
 
 class NanoImgPro():
   def __init__(self, tiff_stack_path:str, roi_size:int, stim_side:str='left',
