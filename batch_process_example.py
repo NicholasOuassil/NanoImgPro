@@ -1,5 +1,3 @@
-import sys
-import os
 from pathlib import Path
 from tqdm import tqdm
 from NanoImgPro.NanoImgPro import NanoImgPro
