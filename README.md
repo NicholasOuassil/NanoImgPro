@@ -1,6 +1,6 @@
 # NanoImgPro
 
-[![PyPI version](https://badge.fury.io/py/NanoImgPro.svg)](https://badge.fury.io/py/NanoImgPro)
+[![PyPI version](https://badge.fury.io/py/NanoImgPro.svg)](https://badge.fury.io/py/NanoImgPro) [![DOI](https://zenodo.org/badge/415144811.svg)](https://zenodo.org/badge/latestdoi/415144811)
 
 Nanosensor Image Processor (NanoImgPro), a python-based image analysis tool for dopamine nanosensors 
 
