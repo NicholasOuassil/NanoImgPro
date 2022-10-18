@@ -1,8 +1,8 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
 authors:
-- family-names: "Nicholas"
-  given-names: "Ouassil"
+- family-names: "Ouassil"
+  given-names: "Nicholas"
   orcid: "https://orcid.org/0000-0002-4970-4514"
 title: "NanoImgPro"
 version: 0.2.3
