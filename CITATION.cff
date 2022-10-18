@@ -5,7 +5,7 @@ authors:
   given-names: "Nicholas"
   orcid: "https://orcid.org/0000-0002-4970-4514"
 title: "NanoImgPro"
-version: 0.2.3
+version: 0.2.3.3
 doi: 10.5281/zenodo.7222431
 date-released: 2022-10-18
 url: "https://github.com/NicholasOuassil/NanoImgPro"
